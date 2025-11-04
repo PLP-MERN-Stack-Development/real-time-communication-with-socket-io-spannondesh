@@ -21,12 +21,14 @@ export const useSocket = () => {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [productInquiries, setProductInquiries] = useState([]);
 
   // Connect to socket server
-  const connect = (username) => {
+  const connect = (username, role) => {
     socket.connect();
     if (username) {
-      socket.emit('user_join', username);
+      socket.emit('user_join', { username, role });
     }
   };
 
@@ -48,6 +50,16 @@ export const useSocket = () => {
   // Set typing status
   const setTyping = (isTyping) => {
     socket.emit('typing', isTyping);
+  };
+
+  // Send a product inquiry
+  const sendProductInquiry = (productId, message) => {
+    socket.emit('product_inquiry', { productId, message });
+  };
+
+  // Send a seller response
+  const sendSellerResponse = (customerId, productId, message) => {
+    socket.emit('seller_response', { customerId, productId, message });
   };
 
   // Socket event listeners
@@ -108,6 +120,19 @@ export const useSocket = () => {
       setTypingUsers(users);
     };
 
+    // Product events
+    const onProductsUpdate = (updatedProducts) => {
+      setProducts(updatedProducts);
+    };
+
+    const onProductInquiry = (inquiry) => {
+      setProductInquiries(prev => [...prev, inquiry]);
+    };
+
+    const onSellerResponse = (response) => {
+      setProductInquiries(prev => [...prev, response]);
+    };
+
     // Register event listeners
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -117,6 +142,9 @@ export const useSocket = () => {
     socket.on('user_joined', onUserJoined);
     socket.on('user_left', onUserLeft);
     socket.on('typing_users', onTypingUsers);
+    socket.on('products_update', onProductsUpdate);
+    socket.on('product_inquiry', onProductInquiry);
+    socket.on('seller_response', onSellerResponse);
 
     // Clean up event listeners
     return () => {
@@ -128,6 +156,9 @@ export const useSocket = () => {
       socket.off('user_joined', onUserJoined);
       socket.off('user_left', onUserLeft);
       socket.off('typing_users', onTypingUsers);
+      socket.off('products_update', onProductsUpdate);
+      socket.off('product_inquiry', onProductInquiry);
+      socket.off('seller_response', onSellerResponse);
     };
   }, []);
 
@@ -143,6 +174,10 @@ export const useSocket = () => {
     sendMessage,
     sendPrivateMessage,
     setTyping,
+    products,
+    productInquiries,
+    sendProductInquiry,
+    sendSellerResponse,
   };
 };
 
